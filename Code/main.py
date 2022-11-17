@@ -1,7 +1,8 @@
 import numpy as np
 import socket
-import matplotlib.pyplot as plt
+import cv2
 import time
+import copy
 
 def amg_process(byte_data):
     temp_str = str(byte_data, 'utf8')
@@ -9,38 +10,14 @@ def amg_process(byte_data):
     temp_vector = [float(x) for x in temp_vector]
     return temp_vector
 
-def amg_detection(pix_data, tres):
-    t_pix_data = pix_data.transpose()
-
-    back_ave = np.average(pix_data)
-    upper_ave = np.average(pix_data[0:3])
-    lower_ave = np.average(pix_data[5:8])
-    left_ave = np.average(t_pix_data[0:3])
-    right_ave = np.average(t_pix_data[5:8])
-    center_ave = np.average([x[2:6] for x in pix_data[2:6]])
-
-    print(back_ave, upper_ave, lower_ave, left_ave, right_ave, center_ave)
-
-    if center_ave > (back_ave+tres):
-        state = 1
-    elif upper_ave > (back_ave+tres):
-        state = 2
-    elif lower_ave > (back_ave+tres):
-        state = 3
-    elif left_ave > (back_ave+tres):
-        state = 4
-    elif right_ave > (back_ave+tres):
-        state = 5
-    else:
-        state = 0
-
-    return state
-
+# Initialize Pixels and Callibration Algorithm
 norm_pix = []
 cal_vec = []
 cal_pix = []
 kk = 0
 cal_size = 10
+
+frame = np.zeros((8,8))
 
 HOST = '0.0.0.0' 
 PORT = 8080      
@@ -48,20 +25,13 @@ s = socket.socket()
 s.bind((HOST, PORT))
 s.listen(0)
 
-plt.ion()
-
 while True:
+    a = time.time()
     client, addr = s.accept()
     content = client.recv(512)
     norm_pix = amg_process(content)
-    if kk==0: #Callibration Algoritm
-        print("Sensor should have clear path to calibrate against environment")
-        figure, graph = plt.subplots(figsize=(10, 8))
-        graph = plt.imshow(np.reshape(np.repeat(0, 64), (8, 8)),cmap=plt.cm.cool)
-        plt.colorbar()
-        plt.clim(1, 8)
-        plt.draw()
-    # print(norm_pix)
+    if kk==0: #Calibration Algoritm
+        print("Clear the Sensor Path for Background Calibration")
     if kk<cal_size+1:
         kk+=1
     if kk==1:
@@ -81,13 +51,37 @@ while True:
 
     #Display Graph
     pixels_data = np.reshape(cal_pix, (8,8))
-    #print(pixels_data)
-    state = amg_detection(pixels_data, tres=0.5)
-    print(state)
-    graph.set_data(pixels_data)
-    figure.canvas.draw()
-    figure.canvas.flush_events()
+    frame = np.array(pixels_data * (255/8), dtype=np.uint8)
     cal_pix = []
-    time.sleep(0.1)
+    print(frame)
+    frame = cv2.resize(frame, (800, 800))
+    ret, thres = cv2.threshold(frame, 100, 255, cv2.THRESH_BINARY)
+    
+    thres_copy = copy.deepcopy(thres)
+    thres_bgr = cv2.cvtColor(thres_copy, cv2.COLOR_GRAY2BGR)
+    contours, hierarchy = cv2.findContours(thres_copy, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE) #detecting contours
+    length = len(contours)
+    maxArea = -1
+    if length > 0:
+        for i in range(length):  # find the biggest contour (according to area)
+            con_temp = contours[i]
+            area = cv2.contourArea(con_temp)
+            if area > maxArea:
+                maxArea = area
+                ci = i
+
+        res = contours[ci]
+        x, y, w, h = cv2.boundingRect(res)
+        cv2.drawContours(thres_bgr, [res], 0, (255, 255, 255), 2) #Draw Contours 
+        cv2.rectangle(thres_bgr, (x, y),(x+w, y+h), (255, 0, 0), 4) #Draw Rectangle
+
+    b = time.time()
+    fps = str(int(1/(b-a)))
+    cv2.putText(thres_bgr, fps, (20, 40), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 1)
+    cv2.imshow("Threshold", thres_bgr)
+    cv2.imshow("Frame", frame)
+    
+    if cv2.waitKey(1) == 27:
+        break
 
 s.close()
