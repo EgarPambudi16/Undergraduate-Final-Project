@@ -6,7 +6,7 @@
 <setting alwaysvectorfont="no"/>
 <setting verticaltext="up"/>
 </settings>
-<grid distance="0.1" unitdist="mm" unit="mm" style="lines" multiple="1" display="yes" altdistance="5" altunitdist="mil" altunit="mil"/>
+<grid distance="0.01" unitdist="mm" unit="mm" style="lines" multiple="1" display="yes" altdistance="5" altunitdist="mil" altunit="mil"/>
 <layers>
 <layer number="1" name="Top" color="4" fill="1" visible="yes" active="yes"/>
 <layer number="16" name="Bottom" color="1" fill="1" visible="yes" active="yes"/>
@@ -60,30 +60,30 @@
 <library>
 <packages>
 <package name="FEMALE_HEADER_2">
-<smd name="CF1" x="-8.9963" y="-1.782240625" dx="0.9" dy="1.8" layer="1"/>
-<smd name="CF2" x="-6.9963" y="1.817759375" dx="0.9" dy="1.8" layer="1"/>
-<smd name="CF3" x="-4.9963" y="-1.782240625" dx="0.9" dy="1.8" layer="1"/>
-<smd name="CF4" x="-2.9963" y="1.817759375" dx="0.9" dy="1.8" layer="1"/>
-<smd name="CF5" x="-0.9963" y="-1.782240625" dx="0.9" dy="1.8" layer="1"/>
-<smd name="CF6" x="1.0037" y="1.817759375" dx="0.9" dy="1.8" layer="1"/>
-<smd name="CF7" x="3.0037" y="-1.782240625" dx="0.9" dy="1.8" layer="1"/>
-<smd name="CF8" x="5.0037" y="1.817759375" dx="0.9" dy="1.8" layer="1"/>
-<smd name="CF9" x="7.0037" y="-1.782240625" dx="0.9" dy="1.8" layer="1"/>
-<smd name="CF10" x="9.0037" y="1.817759375" dx="0.9" dy="1.8" layer="1"/>
+<smd name="CF1" x="-8.9963" y="1.817759375" dx="0.9" dy="1.8" layer="1"/>
+<smd name="CF2" x="-6.9963" y="-1.812240625" dx="0.9" dy="1.8" layer="1"/>
+<smd name="CF3" x="-4.9963" y="1.817759375" dx="0.9" dy="1.8" layer="1"/>
+<smd name="CF4" x="-2.9963" y="-1.812240625" dx="0.9" dy="1.8" layer="1"/>
+<smd name="CF5" x="-0.9963" y="1.817759375" dx="0.9" dy="1.8" layer="1"/>
+<smd name="CF6" x="1.0037" y="-1.812240625" dx="0.9" dy="1.8" layer="1"/>
+<smd name="CF7" x="3.0037" y="1.817759375" dx="0.9" dy="1.8" layer="1"/>
+<smd name="CF8" x="5.0037" y="-1.812240625" dx="0.9" dy="1.8" layer="1"/>
+<smd name="CF9" x="7.0037" y="1.817759375" dx="0.9" dy="1.8" layer="1"/>
+<smd name="CF10" x="9.0037" y="-1.812240625" dx="0.9" dy="1.8" layer="1"/>
 <wire x1="-9.4963" y1="-2.682240625" x2="-9.4963" y2="2.717759375" width="0.1524" layer="21"/>
 <wire x1="-9.4963" y1="2.717759375" x2="9.5037" y2="2.717759375" width="0.1524" layer="21"/>
 <wire x1="9.5037" y1="2.717759375" x2="9.5037" y2="-2.682240625" width="0.1524" layer="21"/>
 <wire x1="9.5037" y1="-2.682240625" x2="-9.4963" y2="-2.682240625" width="0.1524" layer="21"/>
-<hole x="1" y="0" drill="0.6"/>
-<hole x="-1" y="0" drill="0.6"/>
-<hole x="-3" y="0" drill="0.6"/>
-<hole x="-5" y="0" drill="0.6"/>
-<hole x="-7" y="0" drill="0.6"/>
-<hole x="-9" y="0" drill="0.6"/>
-<hole x="3" y="0" drill="0.6"/>
-<hole x="5" y="0" drill="0.6"/>
-<hole x="7" y="0" drill="0.6"/>
-<hole x="9" y="0" drill="0.6"/>
+<hole x="1" y="0" drill="0.8"/>
+<hole x="-1" y="0" drill="0.8"/>
+<hole x="-3" y="0" drill="0.8"/>
+<hole x="-5" y="0" drill="0.8"/>
+<hole x="-7" y="0" drill="0.8"/>
+<hole x="-9" y="0" drill="0.8"/>
+<hole x="3" y="0" drill="0.8"/>
+<hole x="5" y="0" drill="0.8"/>
+<hole x="7" y="0" drill="0.8"/>
+<hole x="9" y="0" drill="0.8"/>
 </package>
 </packages>
 <symbols>
