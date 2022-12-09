@@ -25,13 +25,11 @@ logging.basicConfig(level=logging.ERROR)
 ## Initialize Variable
 ###########################################################
 DEFAULT_HEIGHT = 0.8
-lat_vel = 0.1
+lat_vel = 0.2
 take_off_status = False
 heat_status = False
-motion_status = 0
+motion_status = 1
 position_estimate = [0, 0, 0]
-heading_angle = 0
-heading_limit = 0
 x_dis_arr = np.zeros(10)
 y_dis_arr = np.zeros(10)
 xi = 0
@@ -39,21 +37,23 @@ yi = 0
 pixels = np.zeros(64)
 norm_pix = []
 temp_threshold = 30
+time_total = 0
 time_prev = 0
 time_now = 0
-time_total = 0
 time_elapsed = 0
-log_file = "Code/Log/log15.csv"
 
 ## Logging Function
 ###########################################################
 def log_pos_callback(timestamp, data, logconf):
     # print(data)
     global position_estimate
+    global time_elapsed
     position_estimate[0] = data['stateEstimate.x']
     position_estimate[1] = data['stateEstimate.y']
     position_estimate[2] = data['stateEstimate.z']
-    log_file_handler.write("{}, {}, {}, {}\n".format(position_estimate[0], position_estimate[1], position_estimate[2], motion_status))
+    # if time_elapsed > 0.2:
+    #     time_elapsed = 0
+    #     # log_file_handler.write("{}, {}, {}, {}\n".format(position_estimate[0], position_estimate[1], position_estimate[2], motion_status))
 
 def log_amg_callback1(timestamp, data, logconf):
     #print(data)
@@ -163,46 +163,13 @@ def motion_run(mc):
 
 def motion_tumble(mc):
     global motion_status
-    global heading_angle
-    print(heading_angle)
     motion_status = 2
     r = random.random()
-    if heading_angle == 0:
-        if r > 0.5:
-            heading_angle = 90*r
-            mc.turn_right(90*r, rate=45)
-        else:
-            heading_angle = (-90*r)
-            mc.turn_left(90*r, rate=45)
-    elif heading_angle > 90 and heading_angle > 0:
-        mc.turn_left(180, rate=60)
-        mc.forward(0.3)
-        heading_angle -= 180
-        print(1)
-    elif heading_angle < -90 and heading_angle < 0:
-        mc.turn_right(180, rate=60)
-        heading_angle += 180
-        mc.forward(0.3)
-        print(2)
-    elif heading_angle < 0:
-        if r > 0.3:
-            heading_angle += 120*r
-            mc.turn_right(120*r, rate=45)
-            print(3)
-        else:
-            heading_angle -= 45*r
-            mc.turn_left(45*r, rate=45)
-            print(4)
-    elif heading_angle > 0:
-        if r > 0.3:
-            heading_angle -= 120*r
-            mc.turn_left(120*r, rate=45)
-            print(5)
-        else:
-            heading_angle += 45*r
-            mc.turn_right(45*r, rate=45)
-            print(6)
-
+    if r < 0.5:
+        mc.turn_right(180*r, rate=45)
+    else:
+        mc.turn_left(180*r, rate=45)
+    # print("Crazyflie Tumbling!")
     mc.stop()
     time.sleep(0.5) 
 
@@ -237,9 +204,9 @@ if __name__ == '__main__':
             print('No flow deck detected!')
             sys.exit(1)
 
-        log_file_handler = open(log_file, "w")
-        log_file_handler.close()
-        log_file_handler = open(log_file, "a")
+        # log_file_handler = open("Code/log3.csv", "w")
+        # log_file_handler.close()
+        # log_file_handler = open("Code/log3.csv", "a")
 
         logconf_pos.start()
         logconf_amg1.start()
@@ -249,80 +216,77 @@ if __name__ == '__main__':
         
         ## Fly and Detect Sequence
         ###########################################################
-        with MotionCommander(scf, default_height=DEFAULT_HEIGHT) as mc:
-            while True:
-                frame, thres_bgr, contours, temp = vl.amg_process(pixels, temp_threshold)
-                length = len(contours)
-                maxArea = -1
-                if length > 0:
-                    heat_status = True
-                    for i in range(length):  # Finding the Biggest Contour
-                        con_temp = contours[i]
-                        area = cv2.contourArea(con_temp)
-                        if area > maxArea:
-                            maxArea = area
-                            ci = i
+        # with MotionCommander(scf, default_height=DEFAULT_HEIGHT) as mc:
+        while True:
+            frame, thres_bgr, contours, temp = vl.amg_process(pixels, temp_threshold)
+            length = len(contours)
+            maxArea = -1
+            if length > 0:
+                heat_status = True
+                for i in range(length):  # Finding the Biggest Contour
+                    con_temp = contours[i]
+                    area = cv2.contourArea(con_temp)
+                    if area > maxArea:
+                        maxArea = area
+                        ci = i
 
-                    res = contours[ci]
-                    (x, y, w, h) = cv2.boundingRect(res)
-                    x_center = int(x+w/2)
-                    y_center = int(y+h/2)
-                    x_amg_distance = int(x_center - 400)
-                    y_amg_distance = int(400 - y_center)
-                    z_vel, yaw_rate = pid_controller(x_amg_distance, y_amg_distance)
-                    # motion_centering(mc, z_vel, yaw_rate)
+                res = contours[ci]
+                (x, y, w, h) = cv2.boundingRect(res)
+                x_center = int(x+w/2)
+                y_center = int(y+h/2)
+                x_amg_distance = int(x_center - 400)
+                y_amg_distance = int(400 - y_center)
+                z_vel, yaw_rate = pid_controller(x_amg_distance, y_amg_distance)
+                # motion_centering(mc, z_vel, yaw_rate)
 
-                    if maxArea > 250000 or temp > 65:
-                        for i in range (0, 6):
-                            mc.stop()
-                            time.sleep(0.5)
-                            if maxArea < 100000 or temp < 50:
-                                break
-                        break
-                    elif x_amg_distance > 40 or y_amg_distance > 40:
-                        motion_centering(mc, z_vel, yaw_rate)
-                    else:
-                        motion_chase(mc, z_vel, yaw_rate)
-
-                    thres_bgr = vl.threshold_box(thres_bgr, res, (x, y, w, h), (x_center, y_center))
-
-                else:
-                    heat_status = False
-                    # motion_run(mc)
-                    # motion_tumble(mc)
-                    # mc.stop()
-                    time_now = time.time()
-                    time_total += time_now - time_prev
-                    time_prev = time.time()
-                    if time_total < 1:
-                        motion_run(mc)
-                    else:
-                        time_total = 0
-                        mc.stop()
-                        motion_tumble(mc)
-                
-                # print(time_total)
-                # # print(time_elapsed)
-                # if time_elapsed > 0.05:
-                #     time_elapsed = 0
-                #     log_file_handler.write("{}, {}, {}, {}\n".format(position_estimate[0], position_estimate[1], position_estimate[2], motion_status))
-                thres_bgr = vl.threshold_gui(thres_bgr, temp, temp_threshold, motion_status, position_estimate)
-                cv2.imshow("Heat Detection Frame", thres_bgr)
-                cv2.imshow("AMG8833 Datastream Frame", frame)
-                time_prev = time.time()
-                if cv2.waitKey(1) == 27:  
+                if maxArea > 160000 or temp > 55:
+                    for i in range (0, 6):
+                        # mc.stop()
+                        time.sleep(0.5)
+                        if maxArea < 100000 or temp < 45:
+                            break
                     break
+                # elif x_amg_distance > 40 or y_amg_distance > 40:
+                #     motion_centering(mc, z_vel, yaw_rate)
+                # else:
+                #     motion_chase(mc, z_vel, yaw_rate)
 
-            print("Heatsource Relative Position:", position_estimate)
-            motion_status = 5
-            mc.back(0.2)
-            mc.down(0.4, 0.4)
-            mc.land(0.4)
+                thres_bgr = vl.threshold_box(thres_bgr, res, (x, y, w, h), (x_center, y_center))
+
+            else:
+                heat_status = False
+                # motion_run(mc)
+                # motion_tumble(mc)
+                # mc.stop()
+                time_now = time.time()
+                time_total += time_now - time_prev
+                if time_total > 1.5:
+                    time_total = 0
+                # else:
+                #     time_total = 0
+                #     mc.stop()
+                #     motion_tumble(mc)
+            
+            print(time_total)
+            time_end = time.time()
+            time_elapsed += time_end - time_prev
+            # print(time_elapsed)
+            thres_bgr = vl.threshold_gui(thres_bgr, temp, temp_threshold, motion_status, position_estimate)
+            cv2.imshow("Heat Detection Frame", thres_bgr)
+            cv2.imshow("AMG8833 Datastream Frame", frame)
+            time_prev = time.time()
+            if cv2.waitKey(1) == 27:  
+                break
+
+            # print("Heatsource Relative Position:", position_estimate)
+            # mc.back(0.2)
+            # mc.down(0.4, 0.4)
+            # mc.land(0.4)
 
         logconf_pos.stop()
         logconf_amg1.stop()
         logconf_amg2.stop()
         logconf_amg3.stop()
         logconf_amg4.stop()
-        log_file_handler.close()
+        # log_file_handler.close()
         sys.exit(1)
