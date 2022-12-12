@@ -59,9 +59,9 @@ def threshold_gui(frame, temp, temp_threshold, motion_status, position_estimatio
     return frame
 
 def flight_data_plot(epoch):
-    dataFrame = pd.read_csv("../Undergraduate-Final-Project/Code/Log/log" + str(epoch) + "1.csv", header=None)
-    legend_element = [Line2D([0], [0], color='r', linewidth=3, label='Start'),
-                    Line2D([0], [0], color='g', linewidth=3, label='Finish'),
+    dataFrame = pd.read_csv("../Undergraduate-Final-Project/Code/log" + str(epoch) + ".csv", header=None)
+    legend_element = [Line2D([0], [0], color='r', marker='o', label='Start'),
+                    Line2D([0], [0], color='g', marker='o', label='Finish'),
                     Line2D([0], [0], color='y', marker='o', label='Run'),
                     Line2D([0], [0], color='m', marker='o', label='Tumble'),
                     Line2D([0], [0], color='k', marker='o', label='Centering'),
@@ -70,33 +70,84 @@ def flight_data_plot(epoch):
     ax = fig.add_subplot(111, projection='3d')
     title_str = "Flight Log " + str(epoch)
     for i in range(0,len(dataFrame)):
-        x = dataFrame[0][i]
-        y = dataFrame[1][i]
-        z = dataFrame[2][i]
-        motion_status = dataFrame[3][i]
-        if i == 0:
-            ax.scatter(x, y, z, s=100, c='r', marker='x')
-        elif i == (len(dataFrame)-1):
-            ax.scatter(x, y, z, s=100, c='g', marker='s')
-        elif motion_status == 1:
-            ax.scatter(x, y, z, s=30, c='y')
-        elif motion_status == 2:
-            ax.scatter(x, y, z, s=30, c='m')
-        elif motion_status == 3:
-            ax.scatter(x, y, z, s=30, c='k')
-        elif motion_status == 4:
-            ax.scatter(x, y, z, s=30, c='b')
+        if i % 1 == 1:
+            x = dataFrame[0][i]
+            y = dataFrame[1][i]
+            z = dataFrame[2][i]
+            motion_status = dataFrame[3][i]
+            if motion_status == 0:
+                ax.scatter(x, y, z, s=30, c='r')
+            elif motion_status == 1:
+                ax.scatter(x, y, z, s=30, c='y')
+            elif motion_status == 2:
+                ax.scatter(x, y, z, s=30, c='m')
+            elif motion_status == 3:
+                ax.scatter(x, y, z, s=30, c='k')
+            elif motion_status == 4:
+                ax.scatter(x, y, z, s=30, c='b')
+            elif motion_status == 5:
+                ax.scatter(x, y, z, s=30, c='g')
+        else:
+            continue
 
-    ax.set_xlim3d(-1.2, 1.2)
+    ax.set_xlim3d(-0.4, 1.4)
     ax.set_ylim3d(-1.2, 1.2)
-    ax.set_zlim3d(0, 1.5)
+    ax.set_zlim3d(0, 1.2)
     ax.set_xlabel("x (m)")
     ax.set_ylabel("y (m)")
     ax.set_zlabel("z (m)")
     ax.set_title(title_str)
-    ax.legend(handles=legend_element)
-    plt.savefig('../Undergraduate-Final-Project/Code/Plot' + str(epoch) + 'flightplot.png')
+    ax.legend(handles = legend_element)
+    plt.savefig('../Undergraduate-Final-Project/Code/flightplot' + str(epoch) + '.png')
+    plt.show()
+
+def position_estimation_plot():
+    dataFrame = pd.read_csv('../Undergraduate-Final-Project/Code/Log/estimation_log.csv', header=None)
+    # label = ['Estimated Heat Source Position', 'Real Heat Source Position']
+    legend_element = [Line2D([0], [0], color='r', marker='o', label='Estimated Heat Source Position'),
+                    Line2D([0], [0], color='b', label='Real Heat Source Position')]
+    fig = plt.figure(figsize=(8, 8))
+    ax = fig.add_subplot(111, projection='3d')
+    title_str = "Heat Source Position Estimation Log"
+    for i in range(0,len(dataFrame)-1):
+        x = dataFrame[0][i]
+        y = dataFrame[1][i]
+        z = dataFrame[2][i]
+        ax.scatter(x, y, z, s=50, c='r')
+    ax.scatter(dataFrame[0][15], dataFrame[1][15], dataFrame[2][15], s=400, marker='x', c='b')
+    ax.view_init(90, 180)
+    ax.set_xlim3d(0, 1.4)
+    ax.set_ylim3d(-1, 1)
+    ax.set_zlim3d(0, 1)
+    ax.set_xlabel("x (m)")
+    ax.set_ylabel("y (m)")
+    ax.set_zlabel("z (m)")
+    ax.set_title(title_str)
+    ax.legend(handles = legend_element)
+    plt.savefig('../Undergraduate-Final-Project/Code/Plot/estimation_plot3.png')
+    plt.show()
+
+def axis_estimation_plot():
+    dataFrame = pd.read_csv('../Undergraduate-Final-Project/Code/Log/estimation_log.csv', header=None)
+    legend_element = [Line2D([0], [0], color='r', linestyle='--', label='Real Position = 0.68'),
+                    Line2D([0], [0], color='b', linestyle='--', label='Estimated Position Mean = ' + str(dataFrame[2][0:15].mean()))]
+    element = [x for x in range(1, 16)]
+    fig = plt.figure(figsize=(10, 6))
+    ax = fig.add_subplot(111)
+    title_str = "Estimated Heat Source Position Z-Axis"
+    ax.bar(element, dataFrame[2][0:15])
+    ax.axhline(dataFrame[2][0:15].mean(), color='b', linewidth=2, linestyle ='--')
+    ax.axhline(0.68, color='r', linewidth=2, linestyle ='--')
+    ax.set_ylim(0, 1)
+    ax.set_xlabel("Data")
+    ax.set_ylabel("z (m)")
+    ax.set_title(title_str)
+    ax.legend(handles = legend_element)
+    plt.savefig('../Undergraduate-Final-Project/Code/Plot/z_plot.png')
     plt.show()
 
 if __name__ == '__main__':
-    flight_data_plot(1)
+    # for i in range (1, 6):
+        # flight_data_plot(i)
+    # position_estimation_plot()
+    axis_estimation_plot()
